@@ -5,26 +5,26 @@ Experiments in passphrase generation.
 Usage:
 
 ```
-passphrase.py word_list.txt <passphrase_length>
+passphrase -l <passphrase_length>
 ```
 
-You can pass any newline-separated word list you like, and the passphrase length is specified in number of words.
+The passphrase length is specified in number of words.  The source word list is `word_list.txt` in the root of this repo.
 
-For generating actual passphrases, I recommend using your own (secure) source of random numbers to choose your words.  I do utilize python's `secrets` library to select the words, which in theory should be secure.  But I have no idea if there are special considerations when using that API, so trust my code at your own risk.
+For generating actual passphrases, I recommend using your own (secure) source of random numbers to choose your words.  Trust this software's randomness at your own risk.
 
-The more interesting thing here is the word list and the entropy estimates.
+The more interesting thing here is the word list itself and the entropy estimates.
 
 Here is some example output from the program:
 
 ```
-$ ./passphrase.py word_list.txt 6
+$ ./passphrase -l 6
 tool rave pond chug juice stow
-Word list size: 2499
-Estimated entropy: 67 bits
-Estimated entropy with rearrangement: 58 bits
+
+Entropy in this order:  70 bits
+Entropy rearranged:     60 bits
 ```
 
-There are two listed entropy estimates: one for using the words in the given order, and one for if you decide to rearrange them to your liking.  The main experiment of this repo is the latter: can longer passphrases be made more memorable and viable by allowing the user to rerrange the words into a more memorable order?
+There are two listed entropy estimates: one for using the words in the given order, and one for if you decide to rearrange them to your liking.  The main experiment of this repo is the latter: can longer passphrases be made more memorable and practical by allowing the user to rearrange the words into a more memorable order?
 
 For example, using the words above, we could rearrange them like this:
 
@@ -32,16 +32,16 @@ For example, using the words above, we could rearrange them like this:
 stow pond tool, chug rave juice
 ```
 
-Now it reads like a (strange) task list.  We've lost 9 bits of secure entropy this way, but we've also made it *far* more memorable.  And being able to rearrange the words makes it (hopefully) more practical to use even longer pass phrases.
+Now it reads like a (strange) task list.  We've lost 10 bits of secure entropy this way, but we've also made it *far* more memorable.  And being able to rearrange the words makes it (hopefully) more practical to use even longer pass phrases.
 
 The other thing you can do with this word list is change the form of the words.  Let's take a look at another example:
 
 ```
-./passphrase.py word_list.txt 7
+$ ./passphrase -l 7
 dash copy jam smug yield grid revel 
-Word list size: 2499
-Estimated entropy: 79 bits
-Estimated entropy with rearrangement: 66 bits
+
+Entropy in this order:  81 bits
+Entropy rearranged:     69 bits
 ```
 
 We can turn it into this:

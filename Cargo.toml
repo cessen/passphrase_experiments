@@ -1,0 +1,11 @@
+[package]
+name = "passphrase"
+version = "0.1.0"
+authors = ["Nathan Vegdahl <cessen@cessen.com>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.8"
+clap = "2"
+regex = "1"
+num-bigint = "0.3"
