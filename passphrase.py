@@ -55,7 +55,8 @@ if __name__ == "__main__":
 
     print(passphrase)
     if passphrase_length < words_to_generate:
-        print("^^^ please select {} words ^^^\n".format(passphrase_length))
+        print("^^^ please select {} words ^^^".format(passphrase_length))
+    print("")
     print("Source word list size: " + str(len(words)))
     print("Estimated entropy with same word order:  " + str(entropy) + " bits")
     print("Estimated entropy with rearrangement:    " + str(entropy_rearranged) + " bits")
