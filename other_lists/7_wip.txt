@@ -88,21 +88,13 @@ command
 company
 compass
 compute
+concert
+concise
 
 
 ======================================================================
 
 
-comrade
-concave
-conceal
-concede
-conceit
-concept
-concern
-concert
-conches
-concise
 concoct
 concord
 concurs

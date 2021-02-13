@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{borrow::Cow, str::FromStr};
 
 use clap::{App, Arg};
 use num_bigint::ToBigUint;
@@ -28,8 +28,8 @@ fn main() {
         )
         .arg(
             Arg::with_name("max_word_length")
-                .short("w")
-                .long("word_length")
+                .short("m")
+                .long("max_word_length")
                 .value_name("N")
                 .help("Max word length in characters")
                 .takes_value(true)
@@ -39,6 +39,27 @@ fn main() {
                         .and(Ok(()))
                         .or(Err("must be an integer".to_string()))
                 }),
+        )
+        .arg(
+            Arg::with_name("diceware_list")
+                .short("d")
+                .long("diceware_list")
+                .value_name("N")
+                .help("Output a d(N) diceware list.  For example, for use with an 8-sided die, specify '8'")
+                .takes_value(true)
+                .validator(|s| {
+                    usize::from_str(&s)
+                        .and(Ok(()))
+                        .or(Err("must be an integer".to_string()))
+                }),
+        )
+        .arg(
+            Arg::with_name("word_list_path")
+                .short("w")
+                .long("word_list")
+                .value_name("N")
+                .help("Path to an alternative word list to use")
+                .takes_value(true),
         )
         .get_matches();
 
@@ -60,12 +81,60 @@ fn main() {
     //-----------------------------------------
     // Parse word list.
 
+    let word_list_text: Cow<str> = if let Some(path) = args.value_of("word_list_path") {
+        std::fs::read_to_string(path)
+            .expect("Could not read word list file.")
+            .into()
+    } else {
+        WORD_LIST.into()
+    };
     let re = regex::Regex::new(r"^[a-z]+$").unwrap();
-    let words: Vec<_> = WORD_LIST
+    let words: Vec<_> = word_list_text
         .lines()
-        .map(|s| s.trim())
-        .filter(|s| re.is_match(s) && s.len() <= max_word_length)
+        .filter_map(|s| {
+            s.split_whitespace().last().and_then(|s| {
+                if re.is_match(s) && s.len() <= max_word_length {
+                    Some(s)
+                } else {
+                    None
+                }
+            })
+        })
         .collect();
+
+    //-----------------------------------------
+    // If specified on the commandline, print a diceware list and exit.
+
+    if let Some(base_str) = args.value_of("diceware_list") {
+        let base = base_str.parse::<u32>().unwrap();
+        let digit_count = (words.len() as f64).log(base as f64).ceil() as usize;
+        let mut digits = vec![1u32; digit_count];
+
+        for word in words.iter() {
+            // Print dice rolls.
+            for d in 0..digit_count {
+                print!("{}", digits[digit_count - 1 - d]);
+                if d < (digit_count - 1) {
+                    print!("-");
+                }
+            }
+
+            // Print word.
+            println!("    {}", word);
+
+            // Increment dice rolls.
+            for d in 0..digit_count {
+                digits[d] += 1;
+                if digits[d] > base {
+                    digits[d] = 1;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return;
+    }
 
     //-----------------------------------------
     // Generate random passphrase.
@@ -86,11 +155,18 @@ fn main() {
     println!("Source word count:      {}", words.len() as u64);
 }
 
+/// Number of bits of entropy of choosing an *ordered* set of `k` items
+/// from a list of `source_size`.
 fn perm_entropy(source_size: u64, k: u64) -> u64 {
     source_size.to_biguint().unwrap().pow(k as u32).bits() - 1
 }
 
-/// The multi-combination function, returning the bits of entropy of a given choice.
+/// Number of bits of entropy of choosing an *unordered* set of `k` items
+/// from a list of `source_size`.
+///
+/// This is a fairly straightforward application of the "multi-combination"
+/// function:
+/// https://en.wikipedia.org/wiki/Combination#Number_of_combinations_with_repetition
 fn cmbn_entropy(source_size: u64, k: u64) -> u64 {
     if k == 0 {
         return 0;

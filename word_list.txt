@@ -456,7 +456,6 @@ drum
 duck
 duct
 dude
-dues
 duet
 dull
 dumb
@@ -854,7 +853,6 @@ pave
 pawn
 peak
 pear
-peat
 peck
 peek
 peel
@@ -4094,3 +4092,5 @@ command
 company
 compass
 compute
+concert
+concise
