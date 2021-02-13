@@ -86,7 +86,7 @@ fn main() {
 }
 
 fn perm_entropy(source_size: u64, k: u64) -> u64 {
-    source_size.to_biguint().unwrap().pow(k as u32).bits()
+    source_size.to_biguint().unwrap().pow(k as u32).bits() - 1
 }
 
 /// The multi-combination function, returning the bits of entropy of a given choice.
@@ -103,5 +103,5 @@ fn cmbn_entropy(source_size: u64, k: u64) -> u64 {
         c /= i;
     }
 
-    c.bits()
+    c.bits() - 1
 }
