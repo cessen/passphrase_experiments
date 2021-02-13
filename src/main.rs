@@ -33,7 +33,7 @@ fn main() {
                 .value_name("N")
                 .help("Max word length in characters")
                 .takes_value(true)
-                .default_value("6")
+                .default_value("7")
                 .validator(|s| {
                     usize::from_str(&s)
                         .and(Ok(()))
@@ -83,6 +83,7 @@ fn main() {
         "Entropy rearranged:     {} bits",
         cmbn_entropy(words.len() as u64, passphrase_length as u64)
     );
+    println!("Source word count:      {}", words.len() as u64);
 }
 
 fn perm_entropy(source_size: u64, k: u64) -> u64 {
