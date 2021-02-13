@@ -22,7 +22,6 @@ accuse
 ace
 ache
 acid
-acidic
 acne
 acorn
 acrobat
@@ -679,6 +678,8 @@ compute
 concert
 concise
 concur
+condemn
+conduct
 cone
 confer
 convex
@@ -742,7 +743,6 @@ crime
 cringe
 crisis
 crisp
-crispy
 critic
 crop
 crotch

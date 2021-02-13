@@ -90,22 +90,13 @@ compass
 compute
 concert
 concise
+condemn
+conduct
 
 
 ======================================================================
 
 
-concoct
-concord
-concurs
-condemn
-condoes
-condole
-condoms
-condone
-condors
-conduce
-conduct
 conduit
 confabs
 confers
