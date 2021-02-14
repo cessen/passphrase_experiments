@@ -23,10 +23,10 @@ Entropy rearranged:     62 bits
 We can use these words as-is if we like, in which case we get 72 bits of entropy.  But alternatively we can change them around like this:
 
 ```
-Healthy saucy poet hands exist.  Truce.
+Healthy poet hands.  A sauce truce exists.
 ```
 
-The capitalization and punctuation is superfluous.  Thanks to the design of the source word list, the change of word forms is also superfluous, and doesn't affect the entropy.  (Importantly, that isn't true of most diceware word lists.)
+The capitalization and punctuation are superfluous.  Also, thanks to the design of the source word list, the changed word forms and the additional word "a" are also superfluous, and don't affect the entropy.
 
 On the other hand, by rearranging the words, we've lost 10 bits of secure entropy.  Losing 10 bits of entropy is nothing to sneeze at, but what we get in exchange is a goofy and memorable passphrase.  And this becomes even more powerful with longer passphrases, which are increasingly difficult to memorize without some kind of context.  For example:
 
