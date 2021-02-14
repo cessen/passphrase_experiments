@@ -88,12 +88,12 @@ fn main() {
     } else {
         WORD_LIST.into()
     };
-    let re = regex::Regex::new(r"^[a-z]+$").unwrap();
+    // let re = regex::Regex::new(r"^[a-z]+$").unwrap();
     let words: Vec<_> = word_list_text
         .lines()
         .filter_map(|s| {
             s.split_whitespace().last().and_then(|s| {
-                if re.is_match(s) && s.len() <= max_word_length {
+                if !s.is_empty() && s.len() <= max_word_length {
                     Some(s)
                 } else {
                     None
