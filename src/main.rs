@@ -1,8 +1,8 @@
 use std::{borrow::Cow, str::FromStr};
 
 use clap::{App, Arg};
+use getrandom::getrandom;
 use num_bigint::ToBigUint;
-use rand::{rngs::OsRng, Rng};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const WORD_LIST: &str = include_str!("../word_list.txt");
@@ -140,7 +140,7 @@ fn main() {
     // Generate random passphrase.
 
     for _ in 0..passphrase_length {
-        let i = OsRng.gen_range(0..words.len());
+        let i = secure_random_u32(0..(words.len() as u32)) as usize;
         print!("{} ", words[i]);
     }
 
@@ -181,4 +181,23 @@ fn cmbn_entropy(source_size: u64, k: u64) -> u64 {
     }
 
     c.bits() - 1
+}
+
+/// Generate a uniform random number in `range` from the OS's (hopefully)
+/// secure source of random bytes.
+///
+/// This relies on the security of the bytes from `getrandom()`.
+fn secure_random_u32(range: std::ops::Range<u32>) -> u32 {
+    let mut bytes = [0u8; 16];
+    getrandom(&mut bytes[..])
+        .expect("Something went wrong with the secure random number generation.");
+    let n = u128::from_ne_bytes(bytes);
+
+    // Map the large u128 integer space to the smaller `range`.  Since the
+    // space of u128 is so large, and since we're limiting ourselves at most
+    // to a 32-bit output range, the bias incurred by using a simple modulus
+    // is extremely small: at most `1 / 2^96`.  This should be beyond
+    // sufficient for generating secure random passphrases.
+    let count = (range.end - range.start) as u128;
+    range.start + (n % count) as u32
 }
