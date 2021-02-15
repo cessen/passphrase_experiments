@@ -129,8 +129,21 @@ Other ideas I would like to explore in the future are:
 * Letting the user generate e.g. 8 words, and select the 6 they like best.
 * Letting the user generate e.g. four sets of 6 words, and choose the set they like the best.
 
-Both of these would further improve the user's ability to make memorable passphrases.  But both of them would also negatively impact entropy.  I just don't know by how much.  And it needs to be quantifiable to make it acceptable from a security perspective.
+Both of these would further improve the user's ability to make memorable passphrases.  But both of them would also negatively impact security.  I just don't know by how much.  And it needs to be quantifiable to make it acceptable from a security perspective.
 
-The problem basically comes down to how to mathematically model the entropy in a conservative way.  The model needs to adhere to "the user always does the worst possible thing, and the adversary knows that".  At the moment, it's not even clear to me what the "worst possible thing" is in either of these two cases.
+An important aspect of modeling the security margins with these additional ideas is that simply modeling the number of possible resulting passwords isn't (I suspect) enough.  Both of the approaches above will likely change the probability distribution of the passwords as well.  For example, some passwords will become *more likely* and others *less likely*, even if very few become strictly impossible.  And those changing probabilities would give an adversary an edge on guessing passwords.
 
-If anyone has any insight into this, I'd love to hear about it!  I'm really hoping it's one of those things where it's already been solved, and I just don't know where to look for the answers.
+As a starting point, I think the following (or something equivalent) is a good model:
+
+1. The password system has two adversaries who are collaborating: a traditional adversary who is trying to guess the password, and a spy "user" who also wants the adversary to guess their password.
+2. These adversaries have perfect knowledge of the password generation scheme, but are limited to working within its rules.
+3. They can agree ahead of time on a strategy.
+4. After they agree on a strategy, they can no longer communicate, and the spy-user creates their password.
+
+I believe this effectively models a combination of worst-possible-user and strongest-possible-adversary, which lets us give lower bounds on security if we're able to prove anything about it for a given password scheme.
+
+With a 100% random passphrase, the user can't intervene at all, so it's trivial to analyze.  And even if rearrangement is allowed, the best adversarial strategy is fairly obvious: sort the words of the generated password, making their order 100% predictable and thus irrelevant.  This is also easy to analyze with a bit of combinatorial math.
+
+However, with the two additional schemes above, it's not at all clear to me what the best adversarial strategy even is.  I can certainly think of strategies that would make cracking easier (e.g. ranking all words in the source word list, and always choosing the passphrase with the lowest summed rank).  But I don't know if any of them are the *best* adversarial strategy.
+
+If anyone has any insight into this, I'd love to hear about it!  I'm really hoping it's one of those things where it has already been solved, and I just don't know where to look for the answers.
