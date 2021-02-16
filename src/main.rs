@@ -1,8 +1,8 @@
-use std::{borrow::Cow, str::FromStr};
+use std::{borrow::Cow, convert::TryInto, str::FromStr};
 
 use clap::{App, Arg};
 use getrandom::getrandom;
-use num_bigint::ToBigUint;
+use num_bigint::{BigUint, ToBigUint};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const WORD_LIST: &str = include_str!("../word_list.txt");
@@ -16,8 +16,8 @@ fn main() {
             Arg::with_name("passphrase_length")
                 .short("l")
                 .long("length")
-                .value_name("N")
-                .help("Length of the generated passphrase in words")
+                .value_name("WORDS")
+                .help("Desired passphrase length in words")
                 .takes_value(true)
                 .default_value("5")
                 .validator(|s| {
@@ -30,10 +30,23 @@ fn main() {
             Arg::with_name("max_word_length")
                 .short("m")
                 .long("max_word_length")
-                .value_name("N")
+                .value_name("CHARS")
                 .help("Max word length in characters")
                 .takes_value(true)
                 .default_value("7")
+                .validator(|s| {
+                    usize::from_str(&s)
+                        .and(Ok(()))
+                        .or(Err("must be an integer".to_string()))
+                }),
+        )
+        .arg(
+            Arg::with_name("pick_from")
+                .short("p")
+                .long("pick_from")
+                .value_name("N")
+                .help("Generate N words, and let the user pick <WORDS> words from them")
+                .takes_value(true)
                 .validator(|s| {
                     usize::from_str(&s)
                         .and(Ok(()))
@@ -57,8 +70,8 @@ fn main() {
             Arg::with_name("word_list_path")
                 .short("w")
                 .long("word_list")
-                .value_name("N")
-                .help("Path to an alternative word list to use")
+                .value_name("PATH")
+                .help("Specify an alternative word list to use")
                 .takes_value(true),
         )
         .get_matches();
@@ -76,6 +89,17 @@ fn main() {
         usize::from_str(n).unwrap()
     } else {
         unreachable!() // Should never happen due to the default value.
+    };
+
+    let word_choice_set_size = if let Some(n) = args.value_of("pick_from") {
+        let size = usize::from_str(n).unwrap();
+        if size < passphrase_length {
+            println!("Oops: the number of words to pick from (you passed '{}') must be equal to or greater than the passphrase length (you passed '{}').", size, passphrase_length);
+            return;
+        }
+        size
+    } else {
+        passphrase_length
     };
 
     //-----------------------------------------
@@ -137,39 +161,52 @@ fn main() {
     }
 
     //-----------------------------------------
-    // Generate random passphrase.
+    // Print random passphrase, instructions, and info.
 
-    for _ in 0..passphrase_length {
+    for _ in 0..word_choice_set_size {
         let i = secure_random_u32(0..(words.len() as u32)) as usize;
         print!("{} ", words[i]);
     }
+    println!();
 
-    println!(
-        "\n\nEntropy in this order:  {} bits",
-        perm_entropy(words.len() as u64, passphrase_length as u64)
-    );
-    println!(
-        "Entropy rearranged:     {} bits",
-        cmbn_entropy(words.len() as u64, passphrase_length as u64)
-    );
-    println!("Source word count:      {}", words.len() as u64);
+    if word_choice_set_size > passphrase_length {
+        println!(
+            "\n^ Pick {} words from this list, and\n  arrange them however you like.",
+            passphrase_length
+        );
+
+        println!(
+            "\nMin-entropy:        {} bits",
+            (multi_cmbns(words.len(), word_choice_set_size)
+                / multi_cmbns(words.len(), word_choice_set_size - passphrase_length))
+            .bits()
+            .saturating_sub(1)
+        );
+    } else {
+        println!(
+            "\n^ Rearrange these {} words however you like.",
+            passphrase_length
+        );
+
+        println!(
+            "\nMin-entropy:        {} bits",
+            multi_cmbns(words.len(), passphrase_length)
+                .bits()
+                .saturating_sub(1)
+        );
+    }
+
+    println!("Source word count:  {}", words.len());
 }
 
-/// Number of bits of entropy of choosing an *ordered* set of `k` items
-/// from a list of `source_size`.
-fn perm_entropy(source_size: u64, k: u64) -> u64 {
-    source_size.to_biguint().unwrap().pow(k as u32).bits() - 1
-}
-
-/// Number of bits of entropy of choosing an *unordered* set of `k` items
-/// from a list of `source_size`.
+/// Calculates the number of combinations with repetition (also called
+/// multi-combinations).
 ///
-/// This is a fairly straightforward application of the "multi-combination"
-/// function:
+/// See:
 /// https://en.wikipedia.org/wiki/Combination#Number_of_combinations_with_repetition
-fn cmbn_entropy(source_size: u64, k: u64) -> u64 {
+fn multi_cmbns(source_size: usize, k: usize) -> BigUint {
     if k == 0 {
-        return 0;
+        return 0.to_biguint().unwrap();
     }
 
     let mut n = (source_size + k - 1).to_biguint().unwrap();
@@ -180,7 +217,7 @@ fn cmbn_entropy(source_size: u64, k: u64) -> u64 {
         c /= i;
     }
 
-    c.bits() - 1
+    c
 }
 
 /// Generate a uniform random number in `range` from the OS's (hopefully)
@@ -188,16 +225,16 @@ fn cmbn_entropy(source_size: u64, k: u64) -> u64 {
 ///
 /// This relies on the security of the bytes from `getrandom()`.
 fn secure_random_u32(range: std::ops::Range<u32>) -> u32 {
-    let mut bytes = [0u8; 16];
-    getrandom(&mut bytes[..])
-        .expect("Something went wrong with the secure random number generation.");
-    let n = u128::from_ne_bytes(bytes);
+    let mut bytes = [0u8; 36]; // 256 + 32 bits
+    getrandom(&mut bytes[..]).expect("Failed to generate random numbers.");
+    let n = BigUint::from_bytes_le(&bytes);
 
-    // Map the large u128 integer space to the smaller `range`.  Since the
-    // space of u128 is so large, and since we're limiting ourselves at most
-    // to a 32-bit output range, the bias incurred by using a simple modulus
-    // is extremely small: at most `1 / 2^96`.  This should be beyond
+    // Map the large 288-bit integer space to the smaller `range`.  Since the
+    // space of the large int is so big, and since we're limiting ourselves at
+    // most to a 32-bit output range, the bias incurred by using a simple
+    // modulus is extremely small: at most `1 / 2^256`.  This should be beyond
     // sufficient for generating secure random passphrases.
-    let count = (range.end - range.start) as u128;
-    range.start + (n % count) as u32
+    let count = (range.end - range.start).to_biguint().unwrap();
+    let offset: u32 = (n % count).try_into().unwrap();
+    range.start + offset
 }
