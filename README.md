@@ -1,5 +1,7 @@
 # Passphrase Generation Experiments
 
+**DISCLAIMER**: I am not a security expert.  I have done my best to make this software worthy of real use, but I am human and frequently make mistakes.  Even moreso outside my domains of expertise.  Use this software at your own risk.
+
 This repository is an experiment in letting users create more memorable passphrases.  It's in the same spirit as diceware, but with more flexibility.  The idea is to let users participate in crafting their passphrases, but in ways that can be accurately modeled to put lower bounds on the resulting security.
 
 This repository allows three such user-interventions:
